@@ -26,8 +26,8 @@ wss.on("connection", (socket)=>{
     console.log('disconnect to Browser')
   })
   socket.on("message", (message)=>{
-    console.log(message.toString('utf-8'))
-    socket.send(message.toString('utf-8'));
+    let msg = message.toString('utf-8')
+    sockets.forEach((aSocket) => aSocket.send(msg))
   });
 })
 
