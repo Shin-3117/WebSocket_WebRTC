@@ -9,8 +9,10 @@ socket.addEventListener("open", ()=>{
 })
 
 socket.addEventListener("message", (message)=>{
-  // console.log("msg:",message)
-  console.log("받은 메세지:",message.data)
+  // console.log("받은 메세지:",message.data)
+  const li = document.createElement("li")
+  li.innerText = message.data
+  messageList.append(li)
 })
 
 socket.addEventListener("close", ()=>{
