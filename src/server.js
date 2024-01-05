@@ -1,6 +1,6 @@
 import express from "express";
 import http from "http";
-import WebSocket from "ws";
+import SocketIO from "socket.io";
 
 const app = express();
 
@@ -14,22 +14,40 @@ const handleListen = () => console.log("Listening on http://localhost:3000")
 // app.listen(3000, handleListen);
 
 //http서버에 웹소켓 서버 생성
-const server = http.createServer(app)
-const wss = new WebSocket.Server({server});
+const httpServer = http.createServer(app)
+const io = SocketIO(httpServer);
 
-const sockets = [];
+const publicRooms = () => {
+  const sids = io.socket.adapter.sids;
+  const rooms = io.socket.adapter.rooms;
 
-wss.on("connection", (socket)=>{
-  sockets.push(socket);
-  console.log('connect to Browser')
-  socket.on("close",()=>{
-    console.log('disconnect to Browser')
+  const publicRoomList = []
+  rooms.forEach((_,key)=>{
+    if(sids.get(key)===undefined){
+      publicRoomList.push(key);
+    }
   })
-  socket.on("message", (message)=>{
-    let msg = message.toString('utf-8')
-    sockets.forEach((aSocket) => aSocket.send(msg))
-  });
+}
+
+io.on("connection", (socket)=>{
+  socket["nickname"] = "ㅇㅇ"
+  socket.onAny((event)=>{console.log(`Socket Event: ${event}`)})
+  socket.on("enter_room", (roomName,done)=>{
+    socket.join(roomName)
+    done()
+    socket.to(roomName).emit("welcome", socket.nickname);
+  })
+  socket.on("disconnecting", ()=>{
+    socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickname))
+  })
+
+  socket.on("new_message", (msg, room, done) => {
+    socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
+    done()
+  })
+  socket.on("nickname", (nickname) => (socket["nickname"] = nickname))
 })
 
 
-server.listen(3000,handleListen);
+
+httpServer.listen(3000,handleListen);

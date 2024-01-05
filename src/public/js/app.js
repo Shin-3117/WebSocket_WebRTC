@@ -1,28 +1,67 @@
-//웹소켓
-const socket = new WebSocket(`ws://${window.location.host}`)
+const socket = io();
 
-const messageList = document.querySelector("ul");
-const messageForm = document.querySelector("form")
+// const welcome = document.getElementById("welcome")
+const welcome = document.querySelector("#welcome")
+const form = welcome.querySelector("form")
+const room = document.querySelector("#room")
 
-socket.addEventListener("open", ()=>{
-  console.log("서버 연결 완료")
-})
+room.hidden = true
 
-socket.addEventListener("message", (message)=>{
-  // console.log("msg:",message)
-  console.log("받은 메세지:",message.data)
-})
+let roomName;
 
-socket.addEventListener("close", ()=>{
-  console.log("서버 연결 종료")
-})
+const addMessage = (message) => {
+  const ul = room.querySelector("ul");
+  const li = document.createElement("li");
+  li.innerText = message;
+  ul.appendChild(li);
+}
 
-const handleSubmit = (event) => {
+const handleMessageSubmit = (event) => {
   event.preventDefault();
-  const input = messageForm.querySelector("input");
-  console.log("보낸 메세지:",input.value)
-  socket.send(input.value)
+  const input = room.querySelector("#msg input")
+  const value = input.value
+  socket.emit("new_message", value, roomName, ()=>{
+    addMessage(`YOU: ${value}`)
+  })
   input.value = ''
 }
 
-messageForm.addEventListener("submit", handleSubmit)
+const handleNicknameSubmit = (event) => {
+  event.preventDefault();
+  const input = room.querySelector("#name input")
+  const value = input.value
+  socket.emit("nickname", value)
+}
+
+const showRoom = () => {
+  room.hidden = false
+  welcome.hidden = true
+  const roomNameEl = room.querySelector("#roomName")
+  roomNameEl.innerText = `Room: ${roomName}`
+
+  const nameForm = room.querySelector("#name");
+  const msgForm = room.querySelector("#msg");
+  msgForm.addEventListener("submit", handleMessageSubmit);
+  nameForm.addEventListener("submit", handleNicknameSubmit);
+}
+
+const handleRoomSubmit = (event) =>{
+  event.preventDefault();
+  const input = form.querySelector("input")
+  socket.emit("enter_room", input.value, showRoom)
+  roomName = input.value
+  input.value = ""
+}
+
+form.addEventListener("submit", handleRoomSubmit);
+
+socket.on("welcome", (user)=>{
+  addMessage(`${user}님이 참가했습니다.`)
+})
+
+socket.on("bye", (user) =>{
+  addMessage(`${user}님이 떠났습니다.`)
+})
+
+socket.on("new_message", addMessage);
+// addMessage : (msg) => {addMessage(msg)}

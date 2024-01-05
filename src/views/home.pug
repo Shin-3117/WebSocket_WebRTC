@@ -9,9 +9,19 @@ html(lang="en")
     header
       h1 Coom
     main 
-      h2 Welcome to Coom
-      ul
-      form
-        input(type="text", placeholder="메세지 입력", required)
-        button(type="submit") Send
+      div#welcome 
+        h2 Welcome to Coom
+        form
+          input(type="text",placeholder="room name", required)
+          button Enter Room
+      div#room
+        h3#roomName
+        ul
+        form#name
+          input(type="text",placeholder="ㅇㅇ", required)
+          button Save
+        form#msg
+          input(type="text",placeholder="message", required)
+          button Send
+    script(src="/socket.io/socket.io.js")
     script(src="/public/js/app.js")
