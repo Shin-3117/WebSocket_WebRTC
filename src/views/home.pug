@@ -9,19 +9,10 @@ html(lang="en")
     header
       h1 Coom
     main 
-      div#welcome 
-        h2 Welcome to Coom
-        form
-          input(type="text",placeholder="room name", required)
-          button Enter Room
-      div#room
-        h3#roomName
-        ul
-        form#name
-          input(type="text",placeholder="ㅇㅇ", required)
-          button Save
-        form#msg
-          input(type="text",placeholder="message", required)
-          button Send
+      div#myStream
+        video#myFace(autoplay, playsinline, width="400", height="400")
+        //- playsinline : 모바일에서 전체화면 안되게 방지
+        button#muteBtn 음소거 하기
+        button#cameraBtn 카메라 끄기
     script(src="/socket.io/socket.io.js")
     script(src="/public/js/app.js")

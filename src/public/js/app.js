@@ -1,67 +1,54 @@
 const socket = io();
 
-// const welcome = document.getElementById("welcome")
-const welcome = document.querySelector("#welcome")
-const form = welcome.querySelector("form")
-const room = document.querySelector("#room")
+const myFace = document.querySelector("#myFace")
+const muteBtn = document.querySelector("#muteBtn")
+const cameraBtn = document.querySelector("#cameraBtn")
 
-room.hidden = true
+let myStream
+let isMute = false
+let isCameraOn = true
 
-let roomName;
 
-const addMessage = (message) => {
-  const ul = room.querySelector("ul");
-  const li = document.createElement("li");
-  li.innerText = message;
-  ul.appendChild(li);
+const getMedia = async () => {
+  try{
+    myStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: true
+    })
+    // console.log(myStream)
+    myFace.srcObject = myStream
+  }catch(e){
+    console.log(e)
+  }
 }
 
-const handleMessageSubmit = (event) => {
-  event.preventDefault();
-  const input = room.querySelector("#msg input")
-  const value = input.value
-  socket.emit("new_message", value, roomName, ()=>{
-    addMessage(`YOU: ${value}`)
-  })
-  input.value = ''
+getMedia()
+
+const handleMuteClick = () => {
+  myStream
+    .getAudioTracks()
+    .forEach((track)=> {track.enabled = !track.enabled} )
+  if(!isMute){
+    muteBtn.innerText = "음소거 해제"
+    isMute = true
+  }else{
+    muteBtn.innerText = "음소거 하기"
+    isMute = false
+  }
 }
+muteBtn.addEventListener("click", handleMuteClick)
 
-const handleNicknameSubmit = (event) => {
-  event.preventDefault();
-  const input = room.querySelector("#name input")
-  const value = input.value
-  socket.emit("nickname", value)
+const handleCameraClick = () => {
+  myStream
+    .getVideoTracks()
+    .forEach((track)=> {track.enabled = !track.enabled} )
+
+  if(!isCameraOn){
+    cameraBtn.innerText = "카메라 켜기"
+    isCameraOn = true;
+  }else{
+    cameraBtn.innerText = "카메라 끄기"
+    isCameraOn = false;
+  }
 }
-
-const showRoom = () => {
-  room.hidden = false
-  welcome.hidden = true
-  const roomNameEl = room.querySelector("#roomName")
-  roomNameEl.innerText = `Room: ${roomName}`
-
-  const nameForm = room.querySelector("#name");
-  const msgForm = room.querySelector("#msg");
-  msgForm.addEventListener("submit", handleMessageSubmit);
-  nameForm.addEventListener("submit", handleNicknameSubmit);
-}
-
-const handleRoomSubmit = (event) =>{
-  event.preventDefault();
-  const input = form.querySelector("input")
-  socket.emit("enter_room", input.value, showRoom)
-  roomName = input.value
-  input.value = ""
-}
-
-form.addEventListener("submit", handleRoomSubmit);
-
-socket.on("welcome", (user)=>{
-  addMessage(`${user}님이 참가했습니다.`)
-})
-
-socket.on("bye", (user) =>{
-  addMessage(`${user}님이 떠났습니다.`)
-})
-
-socket.on("new_message", addMessage);
-// addMessage : (msg) => {addMessage(msg)}
+cameraBtn.addEventListener("click", handleCameraClick)
