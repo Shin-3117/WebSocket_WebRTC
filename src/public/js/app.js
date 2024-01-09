@@ -60,14 +60,63 @@ const getMedia = async (deviceId) => {
   }
 }
 
-// RTC Code
+const handleIce = (data) => {
+  socket.emit("ice", data.candidate, roomName)
+  console.log('send ice candidate')
+}
+const handleAddStream = (data) => {
+  console.log('받은 peerStream',data.stream)
+  console.log('myStream',myStream)
+  const peersStream = document.querySelector("#peersStream")
+  peersStream.srcObject = data.stream
+}
+// RTC Code: peer1 offer
 const makeConnection = () => {
   myPeerConnection = new RTCPeerConnection();
+  // RTC Code: ICE
+  myPeerConnection.addEventListener("icecandidate", handleIce)
+  // RTC Code: ADD Stream
+  myPeerConnection.addEventListener("addstream", handleAddStream)
+  //Peer1에 연결된 트랙 전달
   myStream.getTracks()
     .forEach((track) => myPeerConnection.addTrack(track, myStream))
 }
+// RTC Code: peer1 offer
+socket.on("welcome", async () => {
+  const offer = await myPeerConnection.createOffer()
+  myPeerConnection.setLocalDescription(offer)
+  console.log('a1. setLocalDescription offer')
+  // RTC Code: peer1 offer 서버로 전송
+  socket.emit("offer", offer, roomName)
+  console.log('a2. send offer')
+})
+// RTC Code: peer2가 peer1의 offer를 받음
+socket.on("offer", async (offer) => {
+  console.log('b1. receive offer')
+  myPeerConnection.setRemoteDescription(offer);
+  console.log('b2. setRemoteDescription')
 
-const startMedia = async () => {
+  const answer = await myPeerConnection.createAnswer()
+  myPeerConnection.setLocalDescription(answer)
+  console.log('b3. setLocalDescription answer')
+  // RTC Code: peer2 가 answer를 서버로 전송
+  socket.emit('answer', answer, roomName)
+  console.log('b4. send answer')
+})
+// RTC Code: peer1가 peer2의 answer를 받음
+socket.on("answer", (answer) => {
+  console.log('a3. receive answer')
+  myPeerConnection.setRemoteDescription(answer);
+  console.log('a4. setRemoteDescription')
+})
+// RTC Code: ICE
+socket.on("ice", (ice) => {
+  myPeerConnection.addIceCandidate(ice)
+  console.log('receive ice candidate')
+})
+
+
+const initCall = async () => {
   welcome.hidden = true;
   call.hidden = false;
   await getMedia();
@@ -76,22 +125,15 @@ const startMedia = async () => {
 
 
 // welcome: select room
-const handleWelcomeSubmit = (event) => {
+const handleWelcomeSubmit = async (event) => {
   event.preventDefault();
   const input = welcomeForm.querySelector("input")
-  socket.emit("join_room",input.value, startMedia)
+  await initCall()
+  socket.emit("join_room",input.value)
   roomName = input.value
   input.value = ''
 }
 welcomeForm.addEventListener("submit",handleWelcomeSubmit)
-
-socket.on("welcome", async () => {
-  const offer = await myPeerConnection.createOffer()
-  myPeerConnection.setLocalDescription(offer)
-  // console.log(offer)
-  socket.emit("offer", offer, roomName)
-})
-
 
 const handleMuteClick = () => {
   myStream

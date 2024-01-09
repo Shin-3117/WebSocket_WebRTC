@@ -15,10 +15,15 @@ html(lang="en")
           button Enter room
       div#call
         div#myStream
+          h2 나
           video#myFace(autoplay, playsinline, width="400", height="400")
           //- playsinline : 모바일에서 전체화면 안되게 방지
           button#muteBtn 음소거 하기
           button#cameraBtn 카메라 끄기
           select#cameras
+        div
+          h2 상대방
+          video#peersStream(autoplay, playsinline, width="400", height="400")
+          //- playsinline : 모바일에서 전체화면 안되게 방지
     script(src="/socket.io/socket.io.js")
     script(src="/public/js/app.js")
